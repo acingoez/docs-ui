@@ -6,7 +6,8 @@
     "dev": "next build && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/copy-pdf-worker.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -16,8 +17,11 @@
     "@mui/material": "^7.3.2",
     "@mui/x-data-grid": "^8.11.3",
     "next": "15.5.3",
+    "pdfjs-dist": "5.3.93",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-pdf": "^10.1.0",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

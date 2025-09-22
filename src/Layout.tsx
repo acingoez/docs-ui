@@ -1,5 +1,7 @@
 // src/Layout.tsx
 import * as React from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
 import {
   AppBar,
   Box,
@@ -7,82 +9,99 @@ import {
   IconButton,
   Toolbar,
   Typography,
+  Tooltip,
   useMediaQuery,
   Theme,
 } from '@mui/material';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
+import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Sidebar from './Sidebar';
 
-const DRAWER_WIDTH = 272;
+export const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
 
-export default function Layout({
-  children,
-  mode,
-  onToggleMode,
-}: React.PropsWithChildren<{ mode: 'light' | 'dark'; onToggleMode: () => void }>) {
-  const isDesktop = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+// Gleiche Breite wie im Drawer (Sidebar)
+const DRAWER_WIDTH = 260;
+
+interface LayoutProps {
+  title?: string;
+  children: React.ReactNode;
+}
+
+export function Layout({ title = 'docuMe', children }: LayoutProps) {
+  const [open, setOpen] = React.useState(false);
+  const isDesktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
 
   return (
-    <>
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          borderBottom: 1,
-          borderColor: 'divider',
-          ...(isDesktop && { width: `calc(100% - ${DRAWER_WIDTH}px)`, ml: `${DRAWER_WIDTH}px` }),
-        }}
-      >
-        <Toolbar sx={{ gap: 1 }}>
-          {!isDesktop && (
-            <IconButton
-              onClick={() => setMobileOpen(true)}
-              edge="start"
-              sx={{ mr: 0.5 }}
-              aria-label="Menü öffnen"
-            >
-              <MenuRoundedIcon />
-            </IconButton>
-          )}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Head>
+        <title>{title}</title>
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </Head>
 
-          {/* Brand – ausschließlich im Header */}
-          <Typography
-            variant="h6"
-            noWrap
-            sx={{
-              fontWeight: 800,
-              letterSpacing: 0.3,
-              mr: 'auto',
-            }}
-          >
-            <Box component="span" sx={{ color: 'primary.main' }}>docu</Box>
-            <Box component="span" sx={{ color: 'text.primary' }}>Me</Box>
-          </Typography>
+      <Sidebar open={open} onClose={() => setOpen(false)} />
 
-          <IconButton onClick={onToggleMode} aria-label="Theme umschalten">
-            {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      <Sidebar width={DRAWER_WIDTH} open={mobileOpen} onClose={() => setMobileOpen(false)} />
-
+      {/* WICHTIG: Auf Desktop den Content links um Drawer-Breite einrücken */}
       <Box
         component="main"
         sx={{
-          minHeight: '100dvh',
-          bgcolor: 'background.default',
-          pt: { xs: 9, sm: 10 },
-          ...(isDesktop && { ml: `${DRAWER_WIDTH}px` }),
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          ml: { lg: `${DRAWER_WIDTH}px` },
         }}
       >
-        <Container maxWidth="lg">{children}</Container>
+        <AppBar
+          position="sticky"
+          color="transparent"
+          elevation={0}
+          sx={{
+            mt: 1.5,
+            backgroundImage: 'none',
+          }}
+        >
+          <Toolbar
+            sx={{
+              gap: 1,
+              bgcolor: 'background.paper',
+              borderRadius: 3,
+              px: 2,
+              boxShadow: (t) =>
+                t.palette.mode === 'light'
+                  ? '0 1px 2px rgba(0,0,0,0.06)'
+                  : '0 1px 2px rgba(0,0,0,0.4)',
+              backdropFilter: 'saturate(120%) blur(6px)',
+            }}
+          >
+            {!isDesktop && (
+              <IconButton onClick={() => setOpen(true)} edge="start" aria-label="Menü">
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: 0.4 }}>
+                docuMe
+              </Typography>
+            </Link>
+            <Box sx={{ flex: 1 }} />
+            <ColorModeContext.Consumer>
+              {({ toggleColorMode }) => (
+                <Tooltip title="Theme umschalten">
+                  <IconButton onClick={toggleColorMode} aria-label="Theme umschalten">
+                    <DarkModeIcon />
+                    {/* Alternativ dynamisch je nach Mode; hier neutral gehalten */}
+                    <LightModeIcon sx={{ display: 'none' }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </ColorModeContext.Consumer>
+          </Toolbar>
+        </AppBar>
+
+        <Container maxWidth="xl" sx={{ py: 3, width: '100%' }}>
+          {children}
+        </Container>
       </Box>
-    </>
+    </Box>
   );
 }
